@@ -1,0 +1,589 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Yield Prediction — Smart Agri AI</title>
+
+  <!-- Google Fonts — same as homepage -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- Font Awesome — same as homepage -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <!-- Yield Prediction stylesheet -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/disease_style.css') }}">
+</head>
+<body>
+
+  <!-- ============================================================
+       ANIMATED CANVAS BACKGROUND
+  ============================================================ -->
+  <canvas id="bgCanvas"></canvas>
+
+  <!-- ============================================================
+       NAVBAR
+  ============================================================ -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+
+      <!-- Logo -->
+      <div class="nav-logo">
+        <span class="logo-icon"><i class="fa-solid fa-leaf"></i></span>
+        <span class="logo-text">Smart<span class="accent">Agri</span> AI</span>
+      </div>
+
+      <!-- Links -->
+      <!-- <ul class="nav-links" id="navLinks">
+        <li><a href="/"          class="nav-link">Home</a></li>
+        <li><a href="/#about"    class="nav-link">About</a></li>
+        <li><a href="/#services" class="nav-link active">Services</a></li>
+        <li><a href="/#features" class="nav-link">Features</a></li>
+        <li><a href="/#contact"  class="nav-link">Contact</a></li>
+      </ul> -->
+
+      <!-- Mobile hamburger -->
+      <div class="hamburger" id="hamburger">
+        <span></span><span></span><span></span>
+      </div>
+
+    </div>
+  </nav>
+
+  <!-- ============================================================
+       PAGE WRAPPER
+  ============================================================ -->
+  <div class="yp-page">
+
+    <!-- ──────────────────────────────────────
+         HERO SECTION
+    ────────────────────────────────────── -->
+    <div class="yp-hero">
+
+      <!-- Floating orbs -->
+      <div class="orb orb1"></div>
+      <div class="orb orb2"></div>
+      <div class="orb orb3"></div>
+
+      <!-- Breadcrumb -->
+      <div class="yp-breadcrumb">
+        <a href="/"><i class="fa-solid fa-house"></i> Home</a>
+        <i class="fa-solid fa-chevron-right"></i>
+        <a href="/#services">Services</a>
+        <i class="fa-solid fa-chevron-right"></i>
+        <span>Yield Prediction</span>
+      </div>
+
+      <!-- Badge -->
+      <div class="yp-badge">
+        <i class="fa-solid fa-chart-line"></i> AI Module 03 — Gradient Boosting
+      </div>
+
+      <!-- Title -->
+      <h1 class="yp-title">
+        Crop Yield<br />
+        <span class="i-text">Prediction</span>
+        <span style="font-size:0.62em;"> using </span>
+        <span class="g-text">AI</span>
+      </h1>
+
+      <!-- Subtitle -->
+      <p class="yp-subtitle">
+        Enter your crop, region, and season details to get an accurate
+        yield forecast — powered by Gradient Boosting Machine Learning.
+      </p>
+
+    </div><!-- /yp-hero -->
+
+
+    <!-- ──────────────────────────────────────
+         MAIN CONTENT
+    ────────────────────────────────────── -->
+    <main class="yp-main">
+
+      <!-- ════════════════════════════════════
+           INPUT CARD
+      ════════════════════════════════════ -->
+      <div class="yp-card">
+
+        <!-- Card header -->
+        <div class="yp-card-header">
+          <div class="yp-card-icon">
+            <i class="fa-solid fa-chart-line"></i>
+          </div>
+          <div class="yp-card-header-text">
+            <h2>Yield Parameters</h2>
+            <p>Fill all fields — prediction is instant</p>
+          </div>
+        </div>
+
+        <!-- Form -->
+        <form action="/predict" method="post" autocomplete="off" id="yieldForm">
+          <div class="yp-form-grid">
+
+            <!-- Dynamic fields from Flask (features + optional options dict) -->
+            {% for f in features %}
+            <div class="yp-field">
+
+              <!-- Label with icon -->
+              <label for="{{ f }}">
+                {% if f == 'Area' or 'area' in f|lower %}
+                  <i class="fa-solid fa-ruler-combined"></i>
+                {% elif f == 'Crop' or 'crop' in f|lower %}
+                  <i class="fa-solid fa-seedling"></i>
+                {% elif f == 'Season' or 'season' in f|lower %}
+                  <i class="fa-solid fa-calendar-days"></i>
+                {% elif f == 'State' or 'state' in f|lower %}
+                  <i class="fa-solid fa-map-location-dot"></i>
+                {% elif f == 'Production' or 'production' in f|lower %}
+                  <i class="fa-solid fa-boxes-stacked"></i>
+                {% elif f == 'Rainfall' or 'rainfall' in f|lower %}
+                  <i class="fa-solid fa-cloud-rain"></i>
+                {% elif f == 'Fertilizer' or 'fertilizer' in f|lower %}
+                  <i class="fa-solid fa-flask"></i>
+                {% elif f == 'Pesticide' or 'pesticide' in f|lower %}
+                  <i class="fa-solid fa-spray-can"></i>
+                {% else %}
+                  <i class="fa-solid fa-circle-dot"></i>
+                {% endif %}
+                {{ f }}
+              </label>
+
+              <!-- Dropdown or text input -->
+              {% set v = (values.get(f) if values is defined else '') %}
+
+              {% if options is defined and options.get(f) %}
+              <!-- SELECT field -->
+              <div class="yp-select-wrap">
+                <select id="{{ f }}" name="{{ f }}" required>
+                  <option value="" {% if not v %}selected{% endif %} disabled>
+                    Select {{ f }}
+                  </option>
+                  {% for opt in options.get(f) %}
+                  <option value="{{ opt }}" {% if v == opt %}selected{% endif %}>
+                    {{ opt }}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              {% else %}
+              <!-- NUMBER input -->
+              <input
+                id="{{ f }}"
+                name="{{ f }}"
+                type="number"
+                step="any"
+                inputmode="decimal"
+                placeholder="{% if f == 'Area' %}e.g. 100{% else %}e.g. 1.23{% endif %}"
+                value="{{ v }}"
+                required
+              />
+              {% endif %}
+
+            </div>
+            {% endfor %}
+
+            <!-- Tip note -->
+            <div class="yp-form-tip">
+              <i class="fa-solid fa-circle-info"></i>
+              <span>
+                If your model was trained with named columns, inputs will show
+                those names — otherwise you will see x1…xn.
+                Dropdown fields are shown for categorical features.
+              </span>
+            </div>
+
+            <!-- Divider -->
+            <div class="yp-form-divider"></div>
+
+            <!-- Action buttons -->
+            <div class="yp-actions">
+              <button type="submit" class="yp-btn-submit" id="ypSubmitBtn">
+                <i class="fa-solid fa-chart-simple"></i>
+                <span class="btn-label">Predict Yield</span>
+                <div class="btn-spinner"></div>
+                <i class="fa-solid fa-arrow-right"></i>
+              </button>
+              <button type="reset" class="yp-btn-reset" id="ypResetBtn">
+                <i class="fa-solid fa-rotate-left"></i>
+                Clear All
+              </button>
+            </div>
+
+          </div><!-- /yp-form-grid -->
+        </form>
+
+        <!-- ════════════════════════════
+             ERROR PANEL
+        ════════════════════════════ -->
+        {% if error %}
+        <div class="yp-panel yp-panel-error">
+          <div class="yp-panel-header">
+            <div class="yp-panel-icon">
+              <i class="fa-solid fa-circle-exclamation"></i>
+            </div>
+            <span class="yp-panel-label">Prediction Error</span>
+          </div>
+          <p class="yp-error-title">Something went wrong</p>
+          <p class="yp-error-detail">{{ error }}</p>
+        </div>
+        {% endif %}
+
+        <!-- ════════════════════════════
+             SUCCESS PANEL
+        ════════════════════════════ -->
+        {% if prediction is not none %}
+        <div class="yp-panel yp-panel-success">
+          <div class="yp-panel-header">
+            <div class="yp-panel-icon">
+              <i class="fa-solid fa-seedling"></i>
+            </div>
+            <span class="yp-panel-label">Predicted Yield</span>
+          </div>
+          <p class="yp-prediction-value">{{ prediction }}</p>
+          <p class="yp-prediction-sub">
+            <i class="fa-solid fa-circle-info" style="margin-right:0.3rem;"></i>
+            Result generated by your trained Gradient Boosting model.
+          </p>
+        </div>
+        {% endif %}
+
+        <!-- ════════════════════════════
+             MODEL DIAGNOSTICS PANEL
+        ════════════════════════════ -->
+        {% if model_info is defined %}
+        <div class="yp-panel">
+          <div class="yp-panel-header">
+            <div class="yp-panel-icon" style="background:rgba(129,140,248,0.15);color:#818cf8;">
+              <i class="fa-solid fa-microchip"></i>
+            </div>
+            <span class="yp-panel-label">Model Diagnostics</span>
+          </div>
+
+          <div class="yp-diag-grid">
+            <div class="yp-diag-item">
+              <p class="yp-diag-label">Model Type</p>
+              <p class="yp-diag-value">{{ model_info.get("type", "—") }}</p>
+            </div>
+            <div class="yp-diag-item">
+              <p class="yp-diag-label">File</p>
+              <p class="yp-diag-value">{{ model_info.get("path", "—") }}</p>
+            </div>
+            <div class="yp-diag-item">
+              <p class="yp-diag-label">Size</p>
+              <p class="yp-diag-value">{{ model_info.get("size_bytes", "—") }} bytes</p>
+            </div>
+            <div class="yp-diag-item">
+              <p class="yp-diag-label">Modified</p>
+              <p class="yp-diag-value">{{ model_info.get("modified", "—") }}</p>
+            </div>
+          </div>
+
+          <!-- Sanity check -->
+          {% if sanity is defined and sanity %}
+          <div class="yp-sanity">
+            <i class="fa-solid fa-flask" style="margin-right:0.4rem;color:#4ade80;"></i>
+            <strong>Sanity check</strong> (same categories, different Area)<br />
+            Area = 10 &nbsp;→&nbsp; <strong>{{ sanity.get("pred_area_10", "—") }}</strong><br />
+            Area = 200 →&nbsp; <strong>{{ sanity.get("pred_area_200", "—") }}</strong>
+            {% if sanity.get("error") %}
+            <br /><span style="color:#f87171;">Sanity error: {{ sanity.get("error") }}</span>
+            {% endif %}
+          </div>
+          {% endif %}
+
+        </div>
+        {% endif %}
+
+      </div><!-- /yp-card -->
+
+    </main><!-- /yp-main -->
+
+
+    <!-- ============================================================
+         FOOTER
+    ============================================================ -->
+    <footer class="footer">
+      <div class="footer-bg-animation"></div>
+      <div class="footer-container">
+
+        <!-- Brand -->
+        <div class="footer-brand">
+          <div class="nav-logo">
+            <span class="logo-icon"><i class="fa-solid fa-leaf"></i></span>
+            <span class="logo-text">Smart<span class="accent">Agri</span> AI</span>
+          </div>
+          <p>Empowering farmers with the power of artificial intelligence. Modern farming for a sustainable future.</p>
+          <div class="footer-socials">
+            <a href="#"><i class="fa-brands fa-github"></i></a>
+            <a href="#"><i class="fa-brands fa-linkedin"></i></a>
+            <a href="#"><i class="fa-brands fa-twitter"></i></a>
+            <a href="#"><i class="fa-brands fa-instagram"></i></a>
+          </div>
+        </div>
+
+        <!-- Quick links -->
+        <div class="footer-links">
+          <h4>Quick Links</h4>
+          <ul>
+            <li><a href="/"><i class="fa-solid fa-chevron-right"></i> Home</a></li>
+            <li><a href="/#about"><i class="fa-solid fa-chevron-right"></i> About</a></li>
+            <li><a href="/#services"><i class="fa-solid fa-chevron-right"></i> Services</a></li>
+            <li><a href="/#features"><i class="fa-solid fa-chevron-right"></i> Features</a></li>
+            <li><a href="/#contact"><i class="fa-solid fa-chevron-right"></i> Contact</a></li>
+          </ul>
+        </div>
+
+        <!-- AI Modules -->
+        <div class="footer-links">
+          <h4>AI Modules</h4>
+          <ul>
+            <li><a href="http://127.0.0.1:5002"><i class="fa-solid fa-chevron-right"></i> Crop Recommendation</a></li>
+            <li><a href="http://127.0.0.1:5001"><i class="fa-solid fa-chevron-right"></i> Soil Fertility</a></li>
+            <li><a href="http://127.0.0.1:5000"><i class="fa-solid fa-chevron-right"></i> Yield Prediction</a></li>
+            <li><a href="http://127.0.0.1:5003"><i class="fa-solid fa-chevron-right"></i> Disease Detection</a></li>
+          </ul>
+        </div>
+
+        <!-- Tech stack -->
+        <div class="footer-tech">
+          <h4>Tech Stack</h4>
+          <div class="tech-tags">
+            <span>Python</span>
+            <span>Flask</span>
+            <span>Scikit-Learn</span>
+            <span>Gradient Boost</span>
+            <span>Pandas</span>
+            <span>NumPy</span>
+            <span>Joblib</span>
+            <span>HTML/CSS/JS</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Bottom bar -->
+      <div class="footer-bottom">
+        <p>© 2025 Smart Agriculture AI. Built with <i class="fa-solid fa-heart"></i> for Farmers of India.</p>
+        <p>ML + DL + Flask | Final Year Project</p>
+      </div>
+    </footer>
+
+  </div><!-- /yp-page -->
+
+
+  <!-- ============================================================
+       JAVASCRIPT
+  ============================================================ -->
+  <script>
+    /* ──────────────────────────────────────────────────────────
+       1. CANVAS — Particle + Grid background
+    ────────────────────────────────────────────────────────── */
+    (function () {
+      const canvas = document.getElementById('bgCanvas');
+      const ctx    = canvas.getContext('2d');
+      let W, H, particles = [], animId;
+
+      function resize() {
+        W = canvas.width  = innerWidth;
+        H = canvas.height = innerHeight;
+      }
+
+      function Particle() { this.reset(); }
+      Particle.prototype.reset = function () {
+        this.x     = Math.random() * W;
+        this.y     = Math.random() * H;
+        this.r     = Math.random() * 1.5 + 0.4;
+        this.vx    = (Math.random() - 0.5) * 0.3;
+        this.vy    = (Math.random() - 0.5) * 0.3;
+        this.alpha = Math.random() * 0.45 + 0.1;
+      };
+      Particle.prototype.update = function () {
+        this.x += this.vx;
+        this.y += this.vy;
+        if (this.x < 0 || this.x > W || this.y < 0 || this.y > H) this.reset();
+      };
+      Particle.prototype.draw = function () {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(74,222,128,${this.alpha})`;
+        ctx.fill();
+      };
+
+      function buildParticles() {
+        particles = [];
+        const n = Math.floor(W * H / 12000);
+        for (let i = 0; i < n; i++) particles.push(new Particle());
+      }
+
+      function drawGrid() {
+        ctx.strokeStyle = 'rgba(74,222,128,0.03)';
+        ctx.lineWidth   = 1;
+        for (let x = 0; x < W; x += 80) {
+          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+        }
+        for (let y = 0; y < H; y += 80) {
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+        }
+      }
+
+      function connectParticles() {
+        for (let i = 0; i < particles.length; i++) {
+          for (let j = i + 1; j < particles.length; j++) {
+            const dx = particles[i].x - particles[j].x;
+            const dy = particles[i].y - particles[j].y;
+            const d  = Math.sqrt(dx * dx + dy * dy);
+            if (d < 120) {
+              ctx.strokeStyle = `rgba(74,222,128,${(1 - d / 120) * 0.14})`;
+              ctx.lineWidth   = 0.6;
+              ctx.beginPath();
+              ctx.moveTo(particles[i].x, particles[i].y);
+              ctx.lineTo(particles[j].x, particles[j].y);
+              ctx.stroke();
+            }
+          }
+        }
+      }
+
+      function animate() {
+        animId = requestAnimationFrame(animate);
+        ctx.clearRect(0, 0, W, H);
+        drawGrid();
+        connectParticles();
+        particles.forEach(p => { p.update(); p.draw(); });
+      }
+
+      resize();
+      buildParticles();
+      animate();
+      window.addEventListener('resize', () => {
+        cancelAnimationFrame(animId);
+        resize();
+        buildParticles();
+        animate();
+      });
+    })();
+
+
+    /* ──────────────────────────────────────────────────────────
+       2. NAVBAR — scroll shrink + hamburger toggle
+    ────────────────────────────────────────────────────────── */
+    (function () {
+      const nav = document.getElementById('navbar');
+      const ham = document.getElementById('hamburger');
+      const lks = document.getElementById('navLinks');
+      window.addEventListener('scroll', () => {
+        nav.classList.toggle('scrolled', scrollY > 60);
+      });
+      ham && ham.addEventListener('click', () => {
+        lks.classList.toggle('open');
+      });
+    })();
+
+
+    /* ──────────────────────────────────────────────────────────
+       3. FORM — validation, shake, loading state, ripple
+    ────────────────────────────────────────────────────────── */
+    (function () {
+      const form      = document.getElementById('yieldForm');
+      const submitBtn = document.getElementById('ypSubmitBtn');
+      const resetBtn  = document.getElementById('ypResetBtn');
+      if (!form) return;
+
+      form.addEventListener('submit', function (e) {
+        /* Validate all required fields */
+        const fields = form.querySelectorAll('input[required], select[required]');
+        let hasError  = false;
+
+        fields.forEach(field => {
+          field.classList.remove('yp-input-error');
+          const isEmpty = field.tagName === 'SELECT'
+            ? field.value === ''
+            : !field.value.trim();
+
+          if (isEmpty) {
+            hasError = true;
+            field.classList.add('yp-input-error');
+            /* Shake */
+            field.animate(
+              [
+                { transform: 'translateX(0)' },
+                { transform: 'translateX(-5px)' },
+                { transform: 'translateX(5px)' },
+                { transform: 'translateX(0)' }
+              ],
+              { duration: 280, iterations: 2 }
+            );
+          }
+        });
+
+        if (hasError) {
+          e.preventDefault();
+          const first = form.querySelector('.yp-input-error');
+          if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          return;
+        }
+
+        /* Loading state */
+        submitBtn.classList.add('loading');
+        submitBtn.disabled = true;
+      });
+
+      /* Reset — clear error states */
+      resetBtn && resetBtn.addEventListener('click', function () {
+        form.querySelectorAll('.yp-input-error')
+            .forEach(el => el.classList.remove('yp-input-error'));
+        submitBtn.classList.remove('loading');
+        submitBtn.disabled = false;
+      });
+
+      /* Live clear on typing / selecting */
+      form.querySelectorAll('input, select').forEach(field => {
+        field.addEventListener('change', function () {
+          if (this.value) this.classList.remove('yp-input-error');
+        });
+        field.addEventListener('input', function () {
+          if (this.value) this.classList.remove('yp-input-error');
+        });
+      });
+
+      /* Ripple on submit */
+      submitBtn.addEventListener('click', function (e) {
+        const rect = this.getBoundingClientRect();
+        const d    = Math.max(this.clientWidth, this.clientHeight);
+        const el   = document.createElement('span');
+        el.style.cssText = `
+          position: absolute;
+          width: ${d}px; height: ${d}px;
+          border-radius: 50%;
+          background: rgba(255,255,255,0.22);
+          pointer-events: none;
+          transform: translate(-50%,-50%) scale(0);
+          animation: ypRipple .5s linear forwards;
+          left: ${e.clientX - rect.left}px;
+          top:  ${e.clientY - rect.top}px;
+        `;
+        this.appendChild(el);
+        setTimeout(() => el.remove(), 550);
+      });
+
+      /* Inject ripple keyframe */
+      if (!document.getElementById('ypRippleStyle')) {
+        const s = document.createElement('style');
+        s.id = 'ypRippleStyle';
+        s.textContent = `
+          @keyframes ypRipple {
+            to { transform: translate(-50%,-50%) scale(2.8); opacity: 0; }
+          }
+        `;
+        document.head.appendChild(s);
+      }
+    })();
+  </script>
+
+</body>
+</html>
