@@ -1,589 +1,817 @@
-
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Yield Prediction — Smart Agri AI</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SmartAgri AI — Crop Yield Predictor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    /* ── Design tokens ─────────────────────────────────────── */
+    :root {
+      --ink:      #0d1a0f;
+      --paper:    #f5f0e8;
+      --cream:    #ede7d9;
+      --sage:     #4a7c59;
+      --sage-lt:  #6fa882;
+      --sage-dk:  #2d5438;
+      --gold:     #c8a84b;
+      --gold-lt:  #e8cc7a;
+      --rust:     #b85c38;
+      --mist:     #dde8e0;
+      --text:     #1c2e20;
+      --text-2:   #4a5e4e;
+      --text-3:   #7a8e7e;
+      --border:   #ccd9cc;
+      --shadow:   rgba(13,26,15,0.12);
+      --font-d:   'Instrument Serif', Georgia, serif;
+      --font-s:   'DM Sans', sans-serif;
+      --font-m:   'DM Mono', monospace;
+      --r:        10px;
+    }
 
-  <!-- Google Fonts — same as homepage -->
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  <!-- Font Awesome — same as homepage -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    html { scroll-behavior: smooth; }
 
-  <!-- Yield Prediction stylesheet -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/disease_style.css') }}">
+    body {
+      font-family: var(--font-s);
+      background: var(--paper);
+      color: var(--text);
+      min-height: 100vh;
+      /* subtle linen-paper texture via repeating gradient */
+      background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    }
+
+    /* ── Topbar ─────────────────────────────────────────────── */
+    .topbar {
+      background: var(--sage-dk);
+      padding: 0 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 58px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.2);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
+    .brand-icon {
+      width: 32px; height: 32px;
+      background: var(--gold);
+      border-radius: 8px;
+      display: grid; place-items: center;
+      font-size: 16px;
+    }
+    .brand-name {
+      font-family: var(--font-d);
+      font-size: 1.25rem;
+      color: var(--paper);
+      letter-spacing: 0.2px;
+    }
+    .brand-name em { color: var(--gold-lt); font-style: normal; }
+    .topbar-meta {
+      font-size: 0.72rem;
+      color: rgba(245,240,232,0.5);
+      font-family: var(--font-m);
+      letter-spacing: 0.5px;
+    }
+
+    /* ── Hero strip ─────────────────────────────────────────── */
+    .hero {
+      background: linear-gradient(135deg, var(--sage-dk) 0%, var(--sage) 60%, #5d9970 100%);
+      padding: 52px 32px 48px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        radial-gradient(ellipse 120% 80% at 20% 50%, rgba(200,168,75,0.12) 0%, transparent 60%),
+        radial-gradient(ellipse 80% 120% at 80% 50%, rgba(13,26,15,0.3) 0%, transparent 60%);
+    }
+    .hero-inner { position: relative; max-width: 680px; margin: 0 auto; }
+    .hero-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(200,168,75,0.2);
+      border: 1px solid rgba(200,168,75,0.4);
+      border-radius: 100px;
+      padding: 4px 14px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--gold-lt);
+      margin-bottom: 20px;
+    }
+    .hero h1 {
+      font-family: var(--font-d);
+      font-size: clamp(2rem, 5vw, 3rem);
+      color: var(--paper);
+      line-height: 1.15;
+      margin-bottom: 14px;
+    }
+    .hero h1 em { color: var(--gold-lt); font-style: italic; }
+    .hero p {
+      font-size: 1rem;
+      color: rgba(245,240,232,0.75);
+      line-height: 1.65;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    /* ── Main layout ─────────────────────────────────────────── */
+    .main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+
+    /* ── Section heading ─────────────────────────────────────── */
+    .section-head {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    .section-num {
+      width: 28px; height: 28px;
+      background: var(--sage-dk);
+      color: var(--paper);
+      border-radius: 50%;
+      display: grid; place-items: center;
+      font-size: 0.75rem;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+    .section-head h2 {
+      font-family: var(--font-d);
+      font-size: 1.3rem;
+      color: var(--sage-dk);
+    }
+    .section-head p {
+      font-size: 0.82rem;
+      color: var(--text-3);
+      margin-top: 1px;
+    }
+
+    /* ── Card ────────────────────────────────────────────────── */
+    .card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+      margin-bottom: 28px;
+      box-shadow: 0 2px 20px var(--shadow);
+    }
+
+    /* ── Form grid ───────────────────────────────────────────── */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px 24px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
+    .span2 { grid-column: 1 / -1; }
+
+    /* ── Field ───────────────────────────────────────────────── */
+    .field {}
+    .field-label {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-2);
+      text-transform: uppercase;
+      letter-spacing: 0.9px;
+      margin-bottom: 7px;
+    }
+    .field-label .icon {
+      font-size: 13px;
+      opacity: 0.7;
+    }
+
+    select,
+    input[type="number"],
+    input[type="text"] {
+      width: 100%;
+      background: var(--paper);
+      border: 1.5px solid var(--border);
+      border-radius: var(--r);
+      color: var(--text);
+      font-family: var(--font-s);
+      font-size: 0.95rem;
+      font-weight: 400;
+      padding: 11px 14px;
+      outline: none;
+      transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    select {
+      cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7' viewBox='0 0 12 7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234a5e4e' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 13px center;
+      padding-right: 36px;
+    }
+    select option { background: #fff; }
+    select:focus,
+    input:focus {
+      border-color: var(--sage);
+      box-shadow: 0 0 0 3px rgba(74,124,89,0.15);
+      background: #fff;
+    }
+    select:disabled {
+      opacity: 0.5;
+      cursor: wait;
+    }
+
+    /* Area field special styling */
+    .area-wrapper { position: relative; }
+    .area-wrapper input { padding-right: 56px; }
+    .area-unit {
+      position: absolute;
+      right: 14px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-3);
+      pointer-events: none;
+    }
+
+    /* ── Divider ─────────────────────────────────────────────── */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border), transparent);
+      margin: 24px 0;
+    }
+
+    /* ── Info note ───────────────────────────────────────────── */
+    .info-note {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      background: var(--mist);
+      border-left: 3px solid var(--sage);
+      border-radius: 0 8px 8px 0;
+      padding: 11px 15px;
+      font-size: 0.8rem;
+      color: var(--text-2);
+      line-height: 1.55;
+      margin-bottom: 24px;
+    }
+    .info-note .ico { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+
+    /* ── Error alert ─────────────────────────────────────────── */
+    .alert-error {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      background: #fff5f5;
+      border: 1.5px solid #f5c0c0;
+      border-radius: var(--r);
+      padding: 13px 16px;
+      font-size: 0.85rem;
+      color: var(--rust);
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+    .alert-error strong { display: block; margin-bottom: 2px; }
+
+    /* ── Actions ─────────────────────────────────────────────── */
+    .actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      background: var(--sage-dk);
+      color: #fff;
+      border: none;
+      border-radius: var(--r);
+      padding: 13px 28px;
+      font-family: var(--font-s);
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 0.2px;
+      transition: background 0.2s, transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 4px 14px rgba(45,84,56,0.35);
+    }
+    .btn-primary:hover {
+      background: var(--sage);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(45,84,56,0.4);
+    }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-primary.loading { opacity: 0.65; pointer-events: none; }
+
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: transparent;
+      color: var(--text-2);
+      border: 1.5px solid var(--border);
+      border-radius: var(--r);
+      padding: 12px 20px;
+      font-family: var(--font-s);
+      font-size: 0.88rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s, background 0.2s;
+    }
+    .btn-ghost:hover {
+      border-color: var(--sage);
+      color: var(--sage-dk);
+      background: var(--mist);
+    }
+
+    .spinner {
+      width: 15px; height: 15px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.65s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Result card ─────────────────────────────────────────── */
+    .result-card {
+      background: linear-gradient(135deg, var(--sage-dk) 0%, #1e4028 100%);
+      border-radius: 16px;
+      padding: 36px;
+      margin-bottom: 28px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 8px 40px rgba(45,84,56,0.4);
+      animation: fadeUp 0.45s ease both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .result-card::before {
+      content: '';
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 220px; height: 220px;
+      background: radial-gradient(circle, rgba(200,168,75,0.18) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .result-card::after {
+      content: '';
+      position: absolute;
+      bottom: -40px; left: -40px;
+      width: 180px; height: 180px;
+      background: radial-gradient(circle, rgba(74,124,89,0.2) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .result-inner { position: relative; z-index: 1; }
+
+    .result-eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--gold-lt);
+      margin-bottom: 6px;
+    }
+    .result-eyebrow .pulse {
+      width: 7px; height: 7px;
+      background: var(--gold-lt);
+      border-radius: 50%;
+      animation: blink 2s ease-in-out infinite;
+    }
+    @keyframes blink {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50%      { opacity: 0.4; transform: scale(0.75); }
+    }
+
+    .result-metrics {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 20px;
+      margin: 24px 0;
+    }
+    @media (max-width: 540px) { .result-metrics { grid-template-columns: 1fr; } }
+
+    .metric-primary {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 12px;
+      padding: 22px 24px;
+    }
+    .metric-secondary {
+      background: rgba(0,0,0,0.2);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 22px 24px;
+    }
+
+    .metric-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: rgba(245,240,232,0.55);
+      margin-bottom: 10px;
+    }
+    .metric-val-xl {
+      font-family: var(--font-m);
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 500;
+      color: var(--gold-lt);
+      line-height: 1;
+      margin-bottom: 5px;
+      letter-spacing: -1px;
+    }
+    .metric-val-md {
+      font-family: var(--font-m);
+      font-size: 1.5rem;
+      font-weight: 500;
+      color: rgba(245,240,232,0.9);
+      line-height: 1;
+      margin-bottom: 5px;
+    }
+    .metric-unit {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--gold);
+      margin-bottom: 6px;
+    }
+    .metric-note {
+      font-size: 0.72rem;
+      color: rgba(245,240,232,0.4);
+      font-family: var(--font-m);
+      line-height: 1.4;
+    }
+
+    /* Result metadata chips */
+    .result-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+    .chip {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 100px;
+      padding: 4px 12px;
+      font-size: 0.75rem;
+      color: rgba(245,240,232,0.7);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .chip strong { color: rgba(245,240,232,0.95); font-weight: 500; }
+
+    /* ── Footer info strip ──────────────────────────────────── */
+    .footer-strip {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 14px 0;
+      border-top: 1px solid var(--border);
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--cream);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 3px 10px;
+      font-size: 0.7rem;
+      font-family: var(--font-m);
+      color: var(--text-3);
+    }
+    .badge b { color: var(--sage-dk); }
+
+    /* ── District counter ─────────────────────────────────────── */
+    #districtCount {
+      font-size: 0.72rem;
+      color: var(--text-3);
+      font-family: var(--font-m);
+      margin-left: 2px;
+    }
+
+    /* ── Responsive tweaks ───────────────────────────────────── */
+    @media (max-width: 600px) {
+      .card { padding: 22px; }
+      .result-card { padding: 24px; }
+      .topbar { padding: 0 18px; }
+      .hero { padding: 36px 18px 32px; }
+    }
+  </style>
 </head>
 <body>
 
-  <!-- ============================================================
-       ANIMATED CANVAS BACKGROUND
-  ============================================================ -->
-  <canvas id="bgCanvas"></canvas>
+<!-- ── Topbar ─────────────────────────────────────────────────── -->
+<nav class="topbar">
+  <a class="brand" href="/">
+    <div class="brand-icon">🌾</div>
+    <span class="brand-name">Smart<em>Agri</em> AI</span>
+  </a>
+  <span class="topbar-meta">CROP YIELD PREDICTOR v2.0</span>
+</nav>
 
-  <!-- ============================================================
-       NAVBAR
-  ============================================================ -->
-  <nav class="navbar" id="navbar">
-    <div class="nav-container">
+<!-- ── Hero ──────────────────────────────────────────────────── -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-tag">🤖 AI-Powered Agriculture</div>
+    <h1>Predict Your <em>Crop Yield</em><br>with Precision</h1>
+    <p>Enter your field parameters below and get instant yield predictions powered by a Gradient Boosting model trained on India-wide agricultural data.</p>
+  </div>
+</section>
 
-      <!-- Logo -->
-      <div class="nav-logo">
-        <span class="logo-icon"><i class="fa-solid fa-leaf"></i></span>
-        <span class="logo-text">Smart<span class="accent">Agri</span> AI</span>
+<!-- ── Main ──────────────────────────────────────────────────── -->
+<main class="main">
+
+  <!-- ─ Result (shown above form after prediction) ──────────── -->
+  {% if result %}
+  <div class="result-card">
+    <div class="result-inner">
+      <div class="result-eyebrow"><span class="pulse"></span> Prediction Complete</div>
+
+      <div class="result-metrics">
+        <div class="metric-primary">
+          <div class="metric-label">🌾 Total Production</div>
+          <div class="metric-val-xl">{{ "{:,.2f}".format(result.total_production) }}</div>
+          <div class="metric-unit">Tonnes</div>
+          <div class="metric-note">{{ "{:,.4f}".format(result.yield_per_ha) }} t/ha × {{ "{:,.0f}".format(result.area) }} ha</div>
+        </div>
+        <div class="metric-secondary">
+          <div class="metric-label">📐 Yield Rate</div>
+          <div class="metric-val-md">{{ "{:,.4f}".format(result.yield_per_ha) }}</div>
+          <div class="metric-unit">Tonnes / Hectare</div>
+          <div class="metric-note">Model output{% if use_exp %} · exp() applied{% endif %}</div>
+        </div>
       </div>
 
-      <!-- Links -->
-      <!-- <ul class="nav-links" id="navLinks">
-        <li><a href="/"          class="nav-link">Home</a></li>
-        <li><a href="/#about"    class="nav-link">About</a></li>
-        <li><a href="/#services" class="nav-link active">Services</a></li>
-        <li><a href="/#features" class="nav-link">Features</a></li>
-        <li><a href="/#contact"  class="nav-link">Contact</a></li>
-      </ul> -->
-
-      <!-- Mobile hamburger -->
-      <div class="hamburger" id="hamburger">
-        <span></span><span></span><span></span>
+      <div class="result-chips">
+        {% if values.get('State_Name') %}<div class="chip">📍 <strong>{{ values['State_Name'] }}</strong></div>{% endif %}
+        {% if values.get('District_Name') %}<div class="chip">🏘 <strong>{{ values['District_Name'] }}</strong></div>{% endif %}
+        {% if values.get('Season') %}<div class="chip">🗓 <strong>{{ values['Season'] }}</strong></div>{% endif %}
+        {% if values.get('Crop') %}<div class="chip">🌱 <strong>{{ values['Crop'] }}</strong></div>{% endif %}
+        <div class="chip">📏 <strong>{{ "{:,.0f}".format(result.area) }} ha</strong></div>
+        <div class="chip">🤖 <strong>{{ model_info.get('type','Model') }}</strong></div>
       </div>
-
     </div>
-  </nav>
+  </div>
+  {% endif %}
 
-  <!-- ============================================================
-       PAGE WRAPPER
-  ============================================================ -->
-  <div class="yp-page">
+  <!-- ─ Input form ──────────────────────────────────────────── -->
+  <div class="section-head">
+    <div class="section-num">1</div>
+    <div>
+      <h2>Field Parameters</h2>
+      <p>All fields are required for an accurate prediction</p>
+    </div>
+  </div>
 
-    <!-- ──────────────────────────────────────
-         HERO SECTION
-    ────────────────────────────────────── -->
-    <div class="yp-hero">
+  <div class="card">
+    {% if error %}
+    <div class="alert-error">
+      <span>⚠</span>
+      <div><strong>Input Error</strong>{{ error }}</div>
+    </div>
+    {% endif %}
 
-      <!-- Floating orbs -->
-      <div class="orb orb1"></div>
-      <div class="orb orb2"></div>
-      <div class="orb orb3"></div>
+    <form method="POST" action="/predict" id="predictForm">
+      <div class="form-grid">
 
-      <!-- Breadcrumb -->
-      <div class="yp-breadcrumb">
-        <a href="/"><i class="fa-solid fa-house"></i> Home</a>
-        <i class="fa-solid fa-chevron-right"></i>
-        <a href="/#services">Services</a>
-        <i class="fa-solid fa-chevron-right"></i>
-        <span>Yield Prediction</span>
-      </div>
-
-      <!-- Badge -->
-      <div class="yp-badge">
-        <i class="fa-solid fa-chart-line"></i> AI Module 03 — Gradient Boosting
-      </div>
-
-      <!-- Title -->
-      <h1 class="yp-title">
-        Crop Yield<br />
-        <span class="i-text">Prediction</span>
-        <span style="font-size:0.62em;"> using </span>
-        <span class="g-text">AI</span>
-      </h1>
-
-      <!-- Subtitle -->
-      <p class="yp-subtitle">
-        Enter your crop, region, and season details to get an accurate
-        yield forecast — powered by Gradient Boosting Machine Learning.
-      </p>
-
-    </div><!-- /yp-hero -->
-
-
-    <!-- ──────────────────────────────────────
-         MAIN CONTENT
-    ────────────────────────────────────── -->
-    <main class="yp-main">
-
-      <!-- ════════════════════════════════════
-           INPUT CARD
-      ════════════════════════════════════ -->
-      <div class="yp-card">
-
-        <!-- Card header -->
-        <div class="yp-card-header">
-          <div class="yp-card-icon">
-            <i class="fa-solid fa-chart-line"></i>
-          </div>
-          <div class="yp-card-header-text">
-            <h2>Yield Parameters</h2>
-            <p>Fill all fields — prediction is instant</p>
-          </div>
-        </div>
-
-        <!-- Form -->
-        <form action="/predict" method="post" autocomplete="off" id="yieldForm">
-          <div class="yp-form-grid">
-
-            <!-- Dynamic fields from Flask (features + optional options dict) -->
-            {% for f in features %}
-            <div class="yp-field">
-
-              <!-- Label with icon -->
-              <label for="{{ f }}">
-                {% if f == 'Area' or 'area' in f|lower %}
-                  <i class="fa-solid fa-ruler-combined"></i>
-                {% elif f == 'Crop' or 'crop' in f|lower %}
-                  <i class="fa-solid fa-seedling"></i>
-                {% elif f == 'Season' or 'season' in f|lower %}
-                  <i class="fa-solid fa-calendar-days"></i>
-                {% elif f == 'State' or 'state' in f|lower %}
-                  <i class="fa-solid fa-map-location-dot"></i>
-                {% elif f == 'Production' or 'production' in f|lower %}
-                  <i class="fa-solid fa-boxes-stacked"></i>
-                {% elif f == 'Rainfall' or 'rainfall' in f|lower %}
-                  <i class="fa-solid fa-cloud-rain"></i>
-                {% elif f == 'Fertilizer' or 'fertilizer' in f|lower %}
-                  <i class="fa-solid fa-flask"></i>
-                {% elif f == 'Pesticide' or 'pesticide' in f|lower %}
-                  <i class="fa-solid fa-spray-can"></i>
-                {% else %}
-                  <i class="fa-solid fa-circle-dot"></i>
-                {% endif %}
-                {{ f }}
-              </label>
-
-              <!-- Dropdown or text input -->
-              {% set v = (values.get(f) if values is defined else '') %}
-
-              {% if options is defined and options.get(f) %}
-              <!-- SELECT field -->
-              <div class="yp-select-wrap">
-                <select id="{{ f }}" name="{{ f }}" required>
-                  <option value="" {% if not v %}selected{% endif %} disabled>
-                    Select {{ f }}
-                  </option>
-                  {% for opt in options.get(f) %}
-                  <option value="{{ opt }}" {% if v == opt %}selected{% endif %}>
-                    {{ opt }}
-                  </option>
-                  {% endfor %}
-                </select>
-              </div>
-
-              {% else %}
-              <!-- NUMBER input -->
-              <input
-                id="{{ f }}"
-                name="{{ f }}"
-                type="number"
-                step="any"
-                inputmode="decimal"
-                placeholder="{% if f == 'Area' %}e.g. 100{% else %}e.g. 1.23{% endif %}"
-                value="{{ v }}"
-                required
-              />
-              {% endif %}
-
-            </div>
+        <!-- State -->
+        {% if 'State_Name' in features %}
+        <div class="field">
+          <div class="field-label"><span class="icon">📍</span> State</div>
+          {% if options.get('State_Name') %}
+          <select name="State_Name" id="sel_State_Name">
+            <option value="">— Select State —</option>
+            {% for opt in options['State_Name'] %}
+            <option value="{{ opt }}" {% if values.get('State_Name') == opt %}selected{% endif %}>{{ opt }}</option>
             {% endfor %}
-
-            <!-- Tip note -->
-            <div class="yp-form-tip">
-              <i class="fa-solid fa-circle-info"></i>
-              <span>
-                If your model was trained with named columns, inputs will show
-                those names — otherwise you will see x1…xn.
-                Dropdown fields are shown for categorical features.
-              </span>
-            </div>
-
-            <!-- Divider -->
-            <div class="yp-form-divider"></div>
-
-            <!-- Action buttons -->
-            <div class="yp-actions">
-              <button type="submit" class="yp-btn-submit" id="ypSubmitBtn">
-                <i class="fa-solid fa-chart-simple"></i>
-                <span class="btn-label">Predict Yield</span>
-                <div class="btn-spinner"></div>
-                <i class="fa-solid fa-arrow-right"></i>
-              </button>
-              <button type="reset" class="yp-btn-reset" id="ypResetBtn">
-                <i class="fa-solid fa-rotate-left"></i>
-                Clear All
-              </button>
-            </div>
-
-          </div><!-- /yp-form-grid -->
-        </form>
-
-        <!-- ════════════════════════════
-             ERROR PANEL
-        ════════════════════════════ -->
-        {% if error %}
-        <div class="yp-panel yp-panel-error">
-          <div class="yp-panel-header">
-            <div class="yp-panel-icon">
-              <i class="fa-solid fa-circle-exclamation"></i>
-            </div>
-            <span class="yp-panel-label">Prediction Error</span>
-          </div>
-          <p class="yp-error-title">Something went wrong</p>
-          <p class="yp-error-detail">{{ error }}</p>
+          </select>
+          {% else %}
+          <input type="text" name="State_Name" value="{{ values.get('State_Name','') }}" placeholder="e.g. Uttar Pradesh"/>
+          {% endif %}
         </div>
         {% endif %}
 
-        <!-- ════════════════════════════
-             SUCCESS PANEL
-        ════════════════════════════ -->
-        {% if prediction is not none %}
-        <div class="yp-panel yp-panel-success">
-          <div class="yp-panel-header">
-            <div class="yp-panel-icon">
-              <i class="fa-solid fa-seedling"></i>
-            </div>
-            <span class="yp-panel-label">Predicted Yield</span>
+        <!-- District -->
+        {% if 'District_Name' in features %}
+        <div class="field">
+          <div class="field-label">
+            <span class="icon">🏘</span> District
+            <span id="districtCount"></span>
           </div>
-          <p class="yp-prediction-value">{{ prediction }}</p>
-          <p class="yp-prediction-sub">
-            <i class="fa-solid fa-circle-info" style="margin-right:0.3rem;"></i>
-            Result generated by your trained Gradient Boosting model.
-          </p>
+          {% if options.get('District_Name') %}
+          <select name="District_Name" id="sel_District_Name">
+            <option value="">— Select State first —</option>
+            {% for opt in options['District_Name'] %}
+            <option value="{{ opt }}" {% if values.get('District_Name') == opt %}selected{% endif %}>{{ opt }}</option>
+            {% endfor %}
+          </select>
+          {% else %}
+          <input type="text" name="District_Name" value="{{ values.get('District_Name','') }}" placeholder="e.g. Agra"/>
+          {% endif %}
         </div>
         {% endif %}
 
-        <!-- ════════════════════════════
-             MODEL DIAGNOSTICS PANEL
-        ════════════════════════════ -->
-        {% if model_info is defined %}
-        <div class="yp-panel">
-          <div class="yp-panel-header">
-            <div class="yp-panel-icon" style="background:rgba(129,140,248,0.15);color:#818cf8;">
-              <i class="fa-solid fa-microchip"></i>
-            </div>
-            <span class="yp-panel-label">Model Diagnostics</span>
-          </div>
+        <!-- Season -->
+        {% if 'Season' in features %}
+        <div class="field">
+          <div class="field-label"><span class="icon">🗓</span> Season</div>
+          {% if options.get('Season') %}
+          <select name="Season" id="sel_Season">
+            <option value="">— Select Season —</option>
+            {% for opt in options['Season'] %}
+            <option value="{{ opt }}" {% if values.get('Season') == opt %}selected{% endif %}>{{ opt }}</option>
+            {% endfor %}
+          </select>
+          {% else %}
+          <input type="text" name="Season" value="{{ values.get('Season','') }}" placeholder="e.g. Kharif"/>
+          {% endif %}
+        </div>
+        {% endif %}
 
-          <div class="yp-diag-grid">
-            <div class="yp-diag-item">
-              <p class="yp-diag-label">Model Type</p>
-              <p class="yp-diag-value">{{ model_info.get("type", "—") }}</p>
-            </div>
-            <div class="yp-diag-item">
-              <p class="yp-diag-label">File</p>
-              <p class="yp-diag-value">{{ model_info.get("path", "—") }}</p>
-            </div>
-            <div class="yp-diag-item">
-              <p class="yp-diag-label">Size</p>
-              <p class="yp-diag-value">{{ model_info.get("size_bytes", "—") }} bytes</p>
-            </div>
-            <div class="yp-diag-item">
-              <p class="yp-diag-label">Modified</p>
-              <p class="yp-diag-value">{{ model_info.get("modified", "—") }}</p>
-            </div>
-          </div>
+        <!-- Crop -->
+        {% if 'Crop' in features %}
+        <div class="field">
+          <div class="field-label"><span class="icon">🌱</span> Crop</div>
+          {% if options.get('Crop') %}
+          <select name="Crop" id="sel_Crop">
+            <option value="">— Select Crop —</option>
+            {% for opt in options['Crop'] %}
+            <option value="{{ opt }}" {% if values.get('Crop') == opt %}selected{% endif %}>{{ opt }}</option>
+            {% endfor %}
+          </select>
+          {% else %}
+          <input type="text" name="Crop" value="{{ values.get('Crop','') }}" placeholder="e.g. Wheat"/>
+          {% endif %}
+        </div>
+        {% endif %}
 
-          <!-- Sanity check -->
-          {% if sanity is defined and sanity %}
-          <div class="yp-sanity">
-            <i class="fa-solid fa-flask" style="margin-right:0.4rem;color:#4ade80;"></i>
-            <strong>Sanity check</strong> (same categories, different Area)<br />
-            Area = 10 &nbsp;→&nbsp; <strong>{{ sanity.get("pred_area_10", "—") }}</strong><br />
-            Area = 200 →&nbsp; <strong>{{ sanity.get("pred_area_200", "—") }}</strong>
-            {% if sanity.get("error") %}
-            <br /><span style="color:#f87171;">Sanity error: {{ sanity.get("error") }}</span>
-            {% endif %}
+        <!-- Area (always full width) -->
+        {% if 'Area' in features %}
+        <div class="field span2">
+          <div class="field-label"><span class="icon">📏</span> Land Area</div>
+          <div class="area-wrapper">
+            <input
+              type="number"
+              name="Area"
+              id="inp_Area"
+              value="{{ values.get('Area','') }}"
+              step="any"
+              min="0.01"
+              placeholder="Enter cultivated land area, e.g. 2500"
+            />
+            <span class="area-unit">ha</span>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Any additional numeric features -->
+        {% for name in features %}
+          {% if name not in ['State_Name','District_Name','Season','Crop','Area'] %}
+          <div class="field {% if name not in ['State_Name','District_Name','Season','Crop','Area'] %}span2{% endif %}">
+            <div class="field-label"><span class="icon">🔢</span> {{ name.replace('_',' ') }}</div>
+            <input
+              type="number"
+              name="{{ name }}"
+              value="{{ values.get(name,'') }}"
+              step="any"
+              placeholder="Enter value"
+            />
           </div>
           {% endif %}
-
-        </div>
-        {% endif %}
-
-      </div><!-- /yp-card -->
-
-    </main><!-- /yp-main -->
-
-
-    <!-- ============================================================
-         FOOTER
-    ============================================================ -->
-    <footer class="footer">
-      <div class="footer-bg-animation"></div>
-      <div class="footer-container">
-
-        <!-- Brand -->
-        <div class="footer-brand">
-          <div class="nav-logo">
-            <span class="logo-icon"><i class="fa-solid fa-leaf"></i></span>
-            <span class="logo-text">Smart<span class="accent">Agri</span> AI</span>
-          </div>
-          <p>Empowering farmers with the power of artificial intelligence. Modern farming for a sustainable future.</p>
-          <div class="footer-socials">
-            <a href="#"><i class="fa-brands fa-github"></i></a>
-            <a href="#"><i class="fa-brands fa-linkedin"></i></a>
-            <a href="#"><i class="fa-brands fa-twitter"></i></a>
-            <a href="#"><i class="fa-brands fa-instagram"></i></a>
-          </div>
-        </div>
-
-        <!-- Quick links -->
-        <div class="footer-links">
-          <h4>Quick Links</h4>
-          <ul>
-            <li><a href="/"><i class="fa-solid fa-chevron-right"></i> Home</a></li>
-            <li><a href="/#about"><i class="fa-solid fa-chevron-right"></i> About</a></li>
-            <li><a href="/#services"><i class="fa-solid fa-chevron-right"></i> Services</a></li>
-            <li><a href="/#features"><i class="fa-solid fa-chevron-right"></i> Features</a></li>
-            <li><a href="/#contact"><i class="fa-solid fa-chevron-right"></i> Contact</a></li>
-          </ul>
-        </div>
-
-        <!-- AI Modules -->
-        <div class="footer-links">
-          <h4>AI Modules</h4>
-          <ul>
-            <li><a href="http://127.0.0.1:5002"><i class="fa-solid fa-chevron-right"></i> Crop Recommendation</a></li>
-            <li><a href="http://127.0.0.1:5001"><i class="fa-solid fa-chevron-right"></i> Soil Fertility</a></li>
-            <li><a href="http://127.0.0.1:5000"><i class="fa-solid fa-chevron-right"></i> Yield Prediction</a></li>
-            <li><a href="http://127.0.0.1:5003"><i class="fa-solid fa-chevron-right"></i> Disease Detection</a></li>
-          </ul>
-        </div>
-
-        <!-- Tech stack -->
-        <div class="footer-tech">
-          <h4>Tech Stack</h4>
-          <div class="tech-tags">
-            <span>Python</span>
-            <span>Flask</span>
-            <span>Scikit-Learn</span>
-            <span>Gradient Boost</span>
-            <span>Pandas</span>
-            <span>NumPy</span>
-            <span>Joblib</span>
-            <span>HTML/CSS/JS</span>
-          </div>
-        </div>
+        {% endfor %}
 
       </div>
 
-      <!-- Bottom bar -->
-      <div class="footer-bottom">
-        <p>© 2025 Smart Agriculture AI. Built with <i class="fa-solid fa-heart"></i> for Farmers of India.</p>
-        <p>ML + DL + Flask | Final Year Project</p>
+      <div class="info-note">
+        <span class="ico">💡</span>
+        <span>Select a <strong>State</strong> first — the District list will automatically filter to show only that state's districts. Area must be in <strong>hectares</strong>. All predictions are based on your trained Gradient Boosting model.</span>
       </div>
-    </footer>
 
-  </div><!-- /yp-page -->
+      <div class="divider"></div>
 
+      <div class="actions">
+        <button type="submit" class="btn-primary" id="submitBtn">
+          <span id="btnIcon">📊</span>
+          <span id="btnText">Predict Yield</span>
+        </button>
+        <button type="button" class="btn-ghost" onclick="clearForm()">
+          ↺ Reset Form
+        </button>
+      </div>
+    </form>
+  </div>
 
-  <!-- ============================================================
-       JAVASCRIPT
-  ============================================================ -->
-  <script>
-    /* ──────────────────────────────────────────────────────────
-       1. CANVAS — Particle + Grid background
-    ────────────────────────────────────────────────────────── */
-    (function () {
-      const canvas = document.getElementById('bgCanvas');
-      const ctx    = canvas.getContext('2d');
-      let W, H, particles = [], animId;
+  <!-- ─ Model info footer ──────────────────────────────────── -->
+  {% if model_info %}
+  <div class="footer-strip">
+    <span style="font-size:0.75rem;color:var(--text-3);font-weight:600;margin-right:4px;">MODEL INFO</span>
+    <div class="badge">Type <b>{{ model_info.get('type','?') }}</b></div>
+    <div class="badge">Updated <b>{{ model_info.get('modified','?') }}</b></div>
+    <div class="badge">Size <b>{{ model_info.get('size_kb','?') }} KB</b></div>
+    {% if use_exp %}<div class="badge">Transform <b>exp()</b></div>{% endif %}
+    {% if is_rate %}<div class="badge">Output <b>Rate × Area</b></div>{% endif %}
+  </div>
+  {% endif %}
 
-      function resize() {
-        W = canvas.width  = innerWidth;
-        H = canvas.height = innerHeight;
-      }
+</main>
 
-      function Particle() { this.reset(); }
-      Particle.prototype.reset = function () {
-        this.x     = Math.random() * W;
-        this.y     = Math.random() * H;
-        this.r     = Math.random() * 1.5 + 0.4;
-        this.vx    = (Math.random() - 0.5) * 0.3;
-        this.vy    = (Math.random() - 0.5) * 0.3;
-        this.alpha = Math.random() * 0.45 + 0.1;
-      };
-      Particle.prototype.update = function () {
-        this.x += this.vx;
-        this.y += this.vy;
-        if (this.x < 0 || this.x > W || this.y < 0 || this.y > H) this.reset();
-      };
-      Particle.prototype.draw = function () {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(74,222,128,${this.alpha})`;
-        ctx.fill();
-      };
+<!-- ── JS ────────────────────────────────────────────────────── -->
+<script>
+  const stateEl    = document.getElementById('sel_State_Name');
+  const districtEl = document.getElementById('sel_District_Name');
+  const countEl    = document.getElementById('districtCount');
 
-      function buildParticles() {
-        particles = [];
-        const n = Math.floor(W * H / 12000);
-        for (let i = 0; i < n; i++) particles.push(new Particle());
-      }
+  /* ── District filtering ─────────────────────────────────── */
+  function loadDistricts(state, keepVal) {
+    if (!districtEl) return;
 
-      function drawGrid() {
-        ctx.strokeStyle = 'rgba(74,222,128,0.03)';
-        ctx.lineWidth   = 1;
-        for (let x = 0; x < W; x += 80) {
-          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
-        }
-        for (let y = 0; y < H; y += 80) {
-          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
-        }
-      }
+    districtEl.disabled = true;
+    districtEl.innerHTML = '<option value="">Loading…</option>';
+    if (countEl) countEl.textContent = '';
 
-      function connectParticles() {
-        for (let i = 0; i < particles.length; i++) {
-          for (let j = i + 1; j < particles.length; j++) {
-            const dx = particles[i].x - particles[j].x;
-            const dy = particles[i].y - particles[j].y;
-            const d  = Math.sqrt(dx * dx + dy * dy);
-            if (d < 120) {
-              ctx.strokeStyle = `rgba(74,222,128,${(1 - d / 120) * 0.14})`;
-              ctx.lineWidth   = 0.6;
-              ctx.beginPath();
-              ctx.moveTo(particles[i].x, particles[i].y);
-              ctx.lineTo(particles[j].x, particles[j].y);
-              ctx.stroke();
-            }
-          }
-        }
-      }
+    const url = state
+      ? `/api/districts?state=${encodeURIComponent(state)}`
+      : '/api/districts';
 
-      function animate() {
-        animId = requestAnimationFrame(animate);
-        ctx.clearRect(0, 0, W, H);
-        drawGrid();
-        connectParticles();
-        particles.forEach(p => { p.update(); p.draw(); });
-      }
-
-      resize();
-      buildParticles();
-      animate();
-      window.addEventListener('resize', () => {
-        cancelAnimationFrame(animId);
-        resize();
-        buildParticles();
-        animate();
-      });
-    })();
-
-
-    /* ──────────────────────────────────────────────────────────
-       2. NAVBAR — scroll shrink + hamburger toggle
-    ────────────────────────────────────────────────────────── */
-    (function () {
-      const nav = document.getElementById('navbar');
-      const ham = document.getElementById('hamburger');
-      const lks = document.getElementById('navLinks');
-      window.addEventListener('scroll', () => {
-        nav.classList.toggle('scrolled', scrollY > 60);
-      });
-      ham && ham.addEventListener('click', () => {
-        lks.classList.toggle('open');
-      });
-    })();
-
-
-    /* ──────────────────────────────────────────────────────────
-       3. FORM — validation, shake, loading state, ripple
-    ────────────────────────────────────────────────────────── */
-    (function () {
-      const form      = document.getElementById('yieldForm');
-      const submitBtn = document.getElementById('ypSubmitBtn');
-      const resetBtn  = document.getElementById('ypResetBtn');
-      if (!form) return;
-
-      form.addEventListener('submit', function (e) {
-        /* Validate all required fields */
-        const fields = form.querySelectorAll('input[required], select[required]');
-        let hasError  = false;
-
-        fields.forEach(field => {
-          field.classList.remove('yp-input-error');
-          const isEmpty = field.tagName === 'SELECT'
-            ? field.value === ''
-            : !field.value.trim();
-
-          if (isEmpty) {
-            hasError = true;
-            field.classList.add('yp-input-error');
-            /* Shake */
-            field.animate(
-              [
-                { transform: 'translateX(0)' },
-                { transform: 'translateX(-5px)' },
-                { transform: 'translateX(5px)' },
-                { transform: 'translateX(0)' }
-              ],
-              { duration: 280, iterations: 2 }
-            );
-          }
+    fetch(url)
+      .then(r => r.json())
+      .then(list => {
+        districtEl.innerHTML = '<option value="">— Select District —</option>';
+        list.forEach(d => {
+          const o = document.createElement('option');
+          o.value = d; o.textContent = d;
+          if (d === keepVal) o.selected = true;
+          districtEl.appendChild(o);
         });
-
-        if (hasError) {
-          e.preventDefault();
-          const first = form.querySelector('.yp-input-error');
-          if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          return;
-        }
-
-        /* Loading state */
-        submitBtn.classList.add('loading');
-        submitBtn.disabled = true;
+        districtEl.disabled = false;
+        if (countEl && state) countEl.textContent = `(${list.length})`;
+      })
+      .catch(() => {
+        districtEl.innerHTML = '<option value="">— Select District —</option>';
+        districtEl.disabled = false;
       });
+  }
 
-      /* Reset — clear error states */
-      resetBtn && resetBtn.addEventListener('click', function () {
-        form.querySelectorAll('.yp-input-error')
-            .forEach(el => el.classList.remove('yp-input-error'));
-        submitBtn.classList.remove('loading');
-        submitBtn.disabled = false;
-      });
+  if (stateEl) {
+    stateEl.addEventListener('change', function() {
+      loadDistricts(this.value, null);
+    });
+    /* restore state on page load after POST */
+    const initState    = stateEl.value;
+    const initDistrict = districtEl ? districtEl.value : '';
+    if (initState) loadDistricts(initState, initDistrict);
+  }
 
-      /* Live clear on typing / selecting */
-      form.querySelectorAll('input, select').forEach(field => {
-        field.addEventListener('change', function () {
-          if (this.value) this.classList.remove('yp-input-error');
-        });
-        field.addEventListener('input', function () {
-          if (this.value) this.classList.remove('yp-input-error');
-        });
-      });
+  /* ── Submit loading state ───────────────────────────────── */
+  document.getElementById('predictForm').addEventListener('submit', () => {
+    const btn = document.getElementById('submitBtn');
+    btn.classList.add('loading');
+    document.getElementById('btnIcon').innerHTML = '<div class="spinner"></div>';
+    document.getElementById('btnText').textContent = 'Computing…';
+  });
 
-      /* Ripple on submit */
-      submitBtn.addEventListener('click', function (e) {
-        const rect = this.getBoundingClientRect();
-        const d    = Math.max(this.clientWidth, this.clientHeight);
-        const el   = document.createElement('span');
-        el.style.cssText = `
-          position: absolute;
-          width: ${d}px; height: ${d}px;
-          border-radius: 50%;
-          background: rgba(255,255,255,0.22);
-          pointer-events: none;
-          transform: translate(-50%,-50%) scale(0);
-          animation: ypRipple .5s linear forwards;
-          left: ${e.clientX - rect.left}px;
-          top:  ${e.clientY - rect.top}px;
-        `;
-        this.appendChild(el);
-        setTimeout(() => el.remove(), 550);
-      });
-
-      /* Inject ripple keyframe */
-      if (!document.getElementById('ypRippleStyle')) {
-        const s = document.createElement('style');
-        s.id = 'ypRippleStyle';
-        s.textContent = `
-          @keyframes ypRipple {
-            to { transform: translate(-50%,-50%) scale(2.8); opacity: 0; }
-          }
-        `;
-        document.head.appendChild(s);
-      }
-    })();
-  </script>
+  /* ── Reset ──────────────────────────────────────────────── */
+  function clearForm() {
+    const f = document.getElementById('predictForm');
+    f.querySelectorAll('input').forEach(i => i.value = '');
+    f.querySelectorAll('select').forEach(s => s.selectedIndex = 0);
+    if (districtEl) loadDistricts(null, null);
+    if (countEl) countEl.textContent = '';
+  }
+</script>
 
 </body>
 </html>
